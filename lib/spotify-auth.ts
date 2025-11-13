@@ -44,6 +44,8 @@ export function getSpotifyAuthUrl(): string {
   return `https://accounts.spotify.com/authorize?${params.toString()}`
 }
 
+export const getAuthorizationUrl = getSpotifyAuthUrl
+
 function generateRandomString(length: number): string {
   const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
   const values = crypto.getRandomValues(new Uint8Array(length))

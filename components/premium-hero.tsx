@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Play, Mic } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { getAuthorizationUrl } from "@/lib/spotify-auth"
 
 export function PremiumHero() {
   const [voiceActive, setVoiceActive] = useState(false)
@@ -54,21 +55,14 @@ export function PremiumHero() {
   }, [])
 
   const handleGetStarted = () => {
-    // Check if user is already authenticated
-    if (typeof window !== "undefined") {
-      const hasToken = localStorage.getItem("spotify_access_token")
-      if (hasToken) {
-        router.push("/home")
-      } else {
-        // Redirect to Spotify login - will be implemented in a future update
-        router.push("/home")
-      }
-    }
+    const authUrl = getAuthorizationUrl()
+    window.location.href = authUrl
   }
 
   const handleVoiceDemo = () => {
     setVoiceActive(!voiceActive)
-    router.push("/home")
+    const authUrl = getAuthorizationUrl()
+    window.location.href = authUrl
   }
 
   return (

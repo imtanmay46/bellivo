@@ -13,15 +13,7 @@ export function Navbar() {
   const handleNavigation = (link: string) => {
     if (link === "Login") {
       router.push("/auth/login")
-    } else if (link === "Home") {
-      router.push("/home")
-    } else if (link === "Explore") {
-      router.push("/explore")
-    } else if (link === "Pricing") {
-      router.push("/pricing")
-    } else if (link === "Features") {
-      router.push("/#features")
-    } else {
+    } else if (link === "Features" || link === "Pricing") {
       const element = document.getElementById(link.toLowerCase())
       if (element) {
         element.scrollIntoView({ behavior: "smooth" })
@@ -30,7 +22,7 @@ export function Navbar() {
     setMobileMenuOpen(false)
   }
 
-  const navLinks = ["Home", "Features", "Pricing", "Explore", "Login"]
+  const navLinks = ["Features", "Pricing", "Login"]
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-md border-b border-[#C9A86A]/10">
