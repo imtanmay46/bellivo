@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import { useSpotifyPlayer } from "@/lib/spotify-player-context"
 import { Play } from "lucide-react"
 import Image from "next/image"
+import { isAuthenticated, getAccessToken } from "@/lib/spotify-auth"
+import { useRouter } from "next/navigation"
 
 interface Playlist {
   id: string
@@ -23,21 +25,50 @@ interface Album {
 }
 
 export default function HomePage() {
+  const router = useRouter()
   const [featuredPlaylists, setFeaturedPlaylists] = useState<Playlist[]>([])
   const [newReleases, setNewReleases] = useState<Album[]>([])
   const [loading, setLoading] = useState(true)
   const player = useSpotifyPlayer()
 
   useEffect(() => {
+    console.log("[v0] Home page: Checking authentication")
+    if (!isAuthenticated()) {
+      console.log("[v0] Not authenticated, redirecting to login")
+      router.push("/auth/login")
+      return
+    }
+
+    console.log("[v0] User authenticated, fetching data")
     const fetchData = async () => {
       try {
+        const accessToken = getAccessToken()
+
+        if (!accessToken) {
+          router.push("/auth/login")
+          return
+        }
+
         const [playlistsRes, releasesRes] = await Promise.all([
-          fetch("/api/spotify/featured-playlists"),
-          fetch("/api/spotify/new-releases"),
+          fetch("https://api.spotify.com/v1/browse/featured-playlists?limit=10", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }),
+          fetch("https://api.spotify.com/v1/browse/new-releases?limit=10", {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }),
         ])
+
+        if (!playlistsRes.ok || !releasesRes.ok) {
+          console.error("[v0] Failed to fetch from Spotify API")
+          router.push("/auth/login")
+          return
+        }
 
         const playlistsData = await playlistsRes.json()
         const releasesData = await releasesRes.json()
+
+        console.log("[v0] Loaded playlists:", playlistsData.playlists?.items?.length)
+        console.log("[v0] Loaded releases:", releasesData.albums?.items?.length)
 
         setFeaturedPlaylists(playlistsData.playlists?.items || [])
         setNewReleases(releasesData.albums?.items || [])
@@ -49,7 +80,7 @@ export default function HomePage() {
     }
 
     fetchData()
-  }, [])
+  }, [router])
 
   const getGreeting = () => {
     const hour = new Date().getHours()

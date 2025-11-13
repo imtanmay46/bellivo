@@ -2,8 +2,6 @@ import type React from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TopBar } from "@/components/top-bar"
 import { PlayerBar } from "@/components/player-bar"
-import { redirect } from "next/navigation"
-import { cookies } from "next/headers"
 
 export default async function AppLayout({
   children,
@@ -11,12 +9,12 @@ export default async function AppLayout({
   children: React.ReactNode
 }) {
   // Check authentication
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get("spotify_access_token")
+  // const cookieStore = await cookies()
+  // const accessToken = cookieStore.get("spotify_access_token")
 
-  if (!accessToken) {
-    redirect("/auth/login")
-  }
+  // if (!accessToken) {
+  //   redirect("/auth/login")
+  // }
 
   return (
     <div className="h-screen bg-gradient-to-b from-[#0B0B0B] to-black text-white">
