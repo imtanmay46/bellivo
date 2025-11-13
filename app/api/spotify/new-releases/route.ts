@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server"
-import { getAccessToken } from "@/lib/spotify-client"
+import { type NextRequest, NextResponse } from "next/server"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const accessToken = await getAccessToken()
+    const authHeader = request.headers.get("authorization")
+    const accessToken = authHeader?.replace("Bearer ", "")
 
     if (!accessToken) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })

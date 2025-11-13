@@ -5,6 +5,7 @@ import { useSpotifyPlayer } from "@/lib/spotify-player-context"
 import { Play, Clock } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { getAccessToken } from "@/lib/spotify-auth"
 
 interface Playlist {
   id: string
@@ -53,12 +54,24 @@ export default function HomePage() {
     console.log("[v0] Home page: Loading Spotify content")
 
     const fetchData = async () => {
+      const accessToken = getAccessToken()
+
+      if (!accessToken) {
+        console.error("[v0] No access token, redirecting to login")
+        router.push("/auth/login")
+        return
+      }
+
+      const headers = {
+        Authorization: `Bearer ${accessToken}`,
+      }
+
       try {
         const [playlistsRes, releasesRes, recentRes, recsRes] = await Promise.all([
-          fetch("/api/spotify/featured-playlists"),
-          fetch("/api/spotify/new-releases"),
-          fetch("/api/spotify/recently-played"),
-          fetch("/api/spotify/recommendations"),
+          fetch("/api/spotify/featured-playlists", { headers }),
+          fetch("/api/spotify/new-releases", { headers }),
+          fetch("/api/spotify/recently-played", { headers }),
+          fetch("/api/spotify/recommendations", { headers }),
         ])
 
         if (

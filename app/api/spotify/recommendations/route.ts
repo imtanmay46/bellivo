@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getAccessToken } from "@/lib/spotify-auth"
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -8,7 +7,8 @@ export async function GET(request: NextRequest) {
   const seedGenres = searchParams.get("seed_genres") || "pop,rock,indie"
 
   try {
-    const token = getAccessToken()
+    const authHeader = request.headers.get("authorization")
+    const token = authHeader?.replace("Bearer ", "")
 
     if (!token) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })

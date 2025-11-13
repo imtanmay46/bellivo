@@ -146,10 +146,13 @@ export function getAccessToken(): string | null {
 
   if (!token || !expiresAt) return null
 
-  // Check if token is expired
   if (Date.now() >= Number.parseInt(expiresAt)) {
-    refreshAccessToken().catch(console.error)
-    return null
+    // Token expired, trigger refresh in background
+    refreshAccessToken().catch(() => {
+      // If refresh fails, clear tokens
+      logout()
+    })
+    return token // Return current token while refreshing
   }
 
   return token
