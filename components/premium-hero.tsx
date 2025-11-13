@@ -54,14 +54,14 @@ export function PremiumHero() {
     return () => cancelAnimationFrame(animationId)
   }, [])
 
-  const handleGetStarted = () => {
-    const authUrl = getAuthorizationUrl()
+  const handleGetStarted = async () => {
+    const authUrl = await getAuthorizationUrl()
     window.location.href = authUrl
   }
 
-  const handleVoiceDemo = () => {
+  const handleVoiceDemo = async () => {
     setVoiceActive(!voiceActive)
-    const authUrl = getAuthorizationUrl()
+    const authUrl = await getAuthorizationUrl()
     window.location.href = authUrl
   }
 

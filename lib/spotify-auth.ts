@@ -19,7 +19,7 @@ const SCOPES = [
   "playlist-modify-private",
 ].join(" ")
 
-export function getSpotifyAuthUrl(): string {
+export async function getSpotifyAuthUrl(): Promise<string> {
   const state = generateRandomString(16)
   const codeVerifier = generateRandomString(128)
 
@@ -29,7 +29,7 @@ export function getSpotifyAuthUrl(): string {
     localStorage.setItem("spotify_auth_state", state)
   }
 
-  const challenge = generateCodeChallenge(codeVerifier)
+  const challenge = await generateCodeChallenge(codeVerifier)
 
   const params = new URLSearchParams({
     client_id: SPOTIFY_CLIENT_ID,
@@ -52,20 +52,16 @@ function generateRandomString(length: number): string {
   return values.reduce((acc, x) => acc + possible[x % possible.length], "")
 }
 
-function generateCodeChallenge(verifier: string): string {
+async function generateCodeChallenge(verifier: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(verifier)
-  const digest = crypto.subtle.digest("SHA-256", data)
+  const hash = await crypto.subtle.digest("SHA-256", data)
 
-  return digest
-    .then((hash) => {
-      const bytes = new Uint8Array(hash)
-      return btoa(String.fromCharCode(...bytes))
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "")
-    })
-    .toString()
+  const bytes = new Uint8Array(hash)
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "")
 }
 
 export async function exchangeCodeForToken(code: string): Promise<{

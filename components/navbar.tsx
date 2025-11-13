@@ -5,14 +5,16 @@ import Link from "next/link"
 import { Menu, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { getAuthorizationUrl } from "@/lib/spotify-auth"
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
 
-  const handleNavigation = (link: string) => {
+  const handleNavigation = async (link: string) => {
     if (link === "Login") {
-      router.push("/auth/login")
+      const authUrl = await getAuthorizationUrl()
+      window.location.href = authUrl
     } else if (link === "Features" || link === "Pricing") {
       const element = document.getElementById(link.toLowerCase())
       if (element) {
