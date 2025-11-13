@@ -9,6 +9,9 @@ export async function POST() {
 
     const cookieStore = await cookies()
     cookieStore.delete("sb-auth-token")
+    cookieStore.delete("spotify_access_token")
+    cookieStore.delete("spotify_refresh_token")
+    cookieStore.delete("spotify_expires_at")
 
     return NextResponse.json({ success: true })
   } catch (error) {

@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { PlayerProvider } from "@/lib/player-context"
+import { SpotifyPlayerProvider } from "@/lib/spotify-player-context"
 import { MusicPlayerGlobal } from "@/components/music-player-global"
 import { VoiceCommandGlobal } from "@/components/voice-command-global"
 import "./globals.css"
@@ -41,11 +42,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`font-sans antialiased dark`}>
-        <PlayerProvider>
-          {children}
-          <MusicPlayerGlobal />
-          <VoiceCommandGlobal />
-        </PlayerProvider>
+        <SpotifyPlayerProvider>
+          <PlayerProvider>
+            {children}
+            <MusicPlayerGlobal />
+            <VoiceCommandGlobal />
+          </PlayerProvider>
+        </SpotifyPlayerProvider>
         <Analytics />
       </body>
     </html>

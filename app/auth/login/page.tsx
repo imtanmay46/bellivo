@@ -30,7 +30,7 @@ export default function LoginPage() {
         password,
       })
       if (error) throw error
-      router.push("/dashboard")
+      router.push("/home")
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {
@@ -40,6 +40,11 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-6 md:p-10">
+      <div className="absolute top-6 right-6">
+        <a href="/api/auth/spotify-login" className="text-sm text-[#C9A86A] hover:underline">
+          Or login with Spotify
+        </a>
+      </div>
       <div className="w-full max-w-sm">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2 text-center">
