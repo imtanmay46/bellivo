@@ -37,7 +37,7 @@ export default function SpotifyCallbackPage() {
         })
 
         if (response.ok) {
-          router.push("/(app)/home")
+          router.push("/home")
         } else {
           setError("Failed to create user profile")
         }

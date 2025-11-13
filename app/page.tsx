@@ -14,7 +14,7 @@ export default async function HomePage() {
   } = await supabase.auth.getUser()
 
   if (user) {
-    redirect("/(app)/home")
+    redirect("/home")
   }
 
   return (
