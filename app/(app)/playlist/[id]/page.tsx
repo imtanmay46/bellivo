@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { useSpotifyPlayer } from "@/lib/spotify-player-context"
 import { Play, Clock, Heart, MoreHorizontal } from "lucide-react"
 import Image from "next/image"
+import { getAccessToken } from "@/lib/spotify-auth"
 
 interface PlaylistDetails {
   id: string
@@ -37,11 +38,20 @@ export default function PlaylistPage() {
   const [playlist, setPlaylist] = useState<PlaylistDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const player = useSpotifyPlayer()
+  const [isLiked, setIsLiked] = useState(false)
 
   useEffect(() => {
     const fetchPlaylist = async () => {
       try {
-        const response = await fetch(`/api/spotify/playlists/${params.id}`)
+        const token = getAccessToken()
+        if (!token) {
+          router.push("/auth/login")
+          return
+        }
+
+        const response = await fetch(`/api/spotify/playlists/${params.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
 
         if (response.status === 401) {
           router.push("/auth/login")
@@ -66,6 +76,25 @@ export default function PlaylistPage() {
       fetchPlaylist()
     }
   }, [params.id, router])
+
+  const handleLikeTrack = async (trackId: string, liked: boolean) => {
+    try {
+      const token = getAccessToken()
+      if (!token) return
+
+      const method = liked ? "DELETE" : "PUT"
+      const response = await fetch(`https://api.spotify.com/v1/me/tracks?ids=${trackId}`, {
+        method,
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (response.ok) {
+        console.log(`[v0] Track ${liked ? "unliked" : "liked"}`)
+      }
+    } catch (error) {
+      console.error("[v0] Failed to like/unlike track:", error)
+    }
+  }
 
   const formatDuration = (ms: number) => {
     const minutes = Math.floor(ms / 60000)
@@ -165,8 +194,11 @@ export default function PlaylistPage() {
               <span className="text-gray-400 truncate">{item.track.album.name}</span>
               <span className="text-gray-400">Today</span>
               <div className="flex items-center gap-4 ml-auto">
-                <button className="opacity-0 group-hover:opacity-100 transition">
-                  <Heart className="w-4 h-4 text-gray-400 hover:text-white" />
+                <button
+                  className="opacity-0 group-hover:opacity-100 transition"
+                  onClick={() => handleLikeTrack(item.track.id, isLiked)}
+                >
+                  <Heart className={`w-4 h-4 ${isLiked ? "text-red-500" : "text-gray-400"} hover:text-white`} />
                 </button>
                 <span className="text-gray-400 text-sm">{formatDuration(item.track.duration_ms)}</span>
               </div>

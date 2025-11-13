@@ -5,6 +5,7 @@ import { SearchIcon, Play } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useDebounce } from "@/lib/use-debounce"
 import { useSpotifyPlayer } from "@/lib/spotify-player-context"
+import { getAccessToken } from "@/lib/spotify-auth"
 import Image from "next/image"
 
 interface SearchResult {
@@ -54,13 +55,18 @@ export default function SearchPage() {
   const [results, setResults] = useState<SearchResult | null>(null)
   const [categories, setCategories] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const debouncedQuery = useDebounce(query, 300) // Reduced debounce to 300ms for faster real-time search
+  const debouncedQuery = useDebounce(query, 200) // Reduced debounce to 200ms for even faster instant results
   const player = useSpotifyPlayer()
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch("/api/spotify/categories")
+        const token = getAccessToken()
+        if (!token) return
+
+        const response = await fetch("/api/spotify/categories", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         const data = await response.json()
         setCategories(data.categories?.items || [])
       } catch (error) {
@@ -80,7 +86,20 @@ export default function SearchPage() {
     const search = async () => {
       setLoading(true)
       try {
-        const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(debouncedQuery)}`)
+        const token = getAccessToken()
+        if (!token) {
+          console.error("[v0] No access token for search")
+          return
+        }
+
+        const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(debouncedQuery)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        if (!response.ok) {
+          throw new Error(`Search failed: ${response.status}`)
+        }
+
         const data = await response.json()
         console.log("[v0] Search results:", data)
         setResults(data)

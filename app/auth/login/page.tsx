@@ -2,7 +2,6 @@
 import { Music } from "lucide-react"
 import { getAuthorizationUrl } from "@/lib/spotify-auth"
 import { Button } from "@/components/ui/button"
-import Image from "next/image"
 
 export default function LoginPage() {
   const handleSpotifyLogin = async () => {
@@ -18,12 +17,10 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="flex flex-col gap-8 items-center text-center">
-          {/* Bellivo Logo */}
           <div className="flex flex-col items-center gap-4">
-            <Image src="/images/bellivo-logo-dark.png" alt="Bellivo" width={80} height={80} className="h-20 w-auto" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-[#C9A86A] to-[#E8D4B8] bg-clip-text text-transparent">
+            <span className="text-5xl font-bold bg-gradient-to-r from-[#C9A86A] via-[#E8D4B8] to-[#C9A86A] bg-clip-text text-transparent tracking-tight">
               Bellivo
-            </h1>
+            </span>
             <p className="text-gray-400">Voice-Assisted Music Streaming</p>
           </div>
 

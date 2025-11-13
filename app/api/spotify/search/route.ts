@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getAccessToken } from "@/lib/spotify-auth"
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -9,13 +8,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Query parameter is required" }, { status: 400 })
   }
 
+  const authHeader = request.headers.get("authorization")
+  const token = authHeader?.replace("Bearer ", "")
+
+  if (!token) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+  }
+
   try {
-    const token = getAccessToken()
-
-    if (!token) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
-    }
-
     const response = await fetch(
       `https://api.spotify.com/v1/search?` +
         new URLSearchParams({

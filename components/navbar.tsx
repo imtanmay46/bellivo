@@ -3,13 +3,10 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
 import { getAuthorizationUrl } from "@/lib/spotify-auth"
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const router = useRouter()
 
   const handleNavigation = async (link: string) => {
     if (link === "Login") {
@@ -31,14 +28,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center gap-2 group">
-            <Image
-              src="/images/bellivo-logo-dark.png"
-              alt="Bellivo"
-              width={40}
-              height={40}
-              className="h-10 w-auto object-contain"
-            />
-            <span className="hidden sm:inline font-bold text-lg bg-gradient-to-r from-[#C9A86A] to-[#E8D4B8] bg-clip-text text-transparent">
+            <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#C9A86A] via-[#E8D4B8] to-[#C9A86A] bg-clip-text text-transparent tracking-tight">
               Bellivo
             </span>
           </Link>
