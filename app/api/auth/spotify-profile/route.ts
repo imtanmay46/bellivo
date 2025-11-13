@@ -27,8 +27,9 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
-    // Use Spotify ID as the profile ID
-    const profileId = user.id
+    const { data: existingProfiles } = await supabase.from("profiles").select("id").eq("email", user.email).limit(1)
+
+    const profileId = existingProfiles?.[0]?.id || crypto.randomUUID()
 
     const { error: profileError } = await supabase.from("profiles").upsert(
       {

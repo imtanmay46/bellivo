@@ -46,22 +46,29 @@ export default function SpotifyCallbackPage() {
         const spotifyUser = await userResponse.json()
         console.log("[v0] Spotify user:", spotifyUser.display_name)
 
-        const profileResponse = await fetch("/api/auth/spotify-profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            accessToken: tokens.access_token,
-            spotifyUser,
-          }),
-        })
+        try {
+          const profileResponse = await fetch("/api/auth/spotify-profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              accessToken: tokens.access_token,
+              spotifyUser,
+            }),
+          })
 
-        if (profileResponse.ok) {
-          console.log("[v0] Profile saved, redirecting to /home")
+          if (profileResponse.ok) {
+            console.log("[v0] Profile saved, redirecting to /home")
+            router.push("/home")
+          } else {
+            const errorData = await profileResponse.json()
+            console.error("[v0] Profile save failed:", errorData)
+            console.log("[v0] Continuing to /home despite profile save failure")
+            router.push("/home")
+          }
+        } catch (profileError) {
+          console.error("[v0] Profile save request failed:", profileError)
+          console.log("[v0] Continuing to /home despite profile error")
           router.push("/home")
-        } else {
-          const errorData = await profileResponse.json()
-          console.error("[v0] Profile save failed:", errorData)
-          setError("Failed to save user profile")
         }
       })
       .catch((err) => {
