@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from "react"
+import { getAccessToken, isAuthenticated } from "@/lib/spotify-auth"
 
 interface Track {
   id: string
@@ -66,24 +67,34 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
 
   const playerRef = useRef<any | null>(null)
   const accessTokenRef = useRef<string | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
+    if (!isAuthenticated()) {
+      console.log("[v0] User not authenticated, skipping Spotify Player initialization")
+      return
+    }
+
+    // Prevent multiple initializations
+    if (isInitialized) return
+
     // Load Spotify Web Playback SDK
     const script = document.createElement("script")
     script.src = "https://sdk.scdn.co/spotify-player.js"
     script.async = true
     document.body.appendChild(script)
 
-    // Get access token from cookie
-    const getAccessToken = async () => {
-      const response = await fetch("/api/auth/spotify-token")
-      const data = await response.json()
-      return data.access_token
-    }
-
     window.onSpotifyWebPlaybackSDKReady = async () => {
-      const token = await getAccessToken()
+      // Get token from localStorage
+      const token = getAccessToken()
+
+      if (!token) {
+        console.error("[v0] No Spotify token available")
+        return
+      }
+
       accessTokenRef.current = token
+      console.log("[v0] Initializing Spotify Web Playback SDK")
 
       const player = new window.Spotify.Player({
         name: "Bellivo Web Player",
@@ -98,6 +109,7 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
       player.addListener("ready", ({ device_id }) => {
         console.log("[v0] Spotify player ready with device ID:", device_id)
         setState((prev) => ({ ...prev, deviceId: device_id }))
+        setIsInitialized(true)
       })
 
       player.addListener("not_ready", ({ device_id }) => {
@@ -137,7 +149,7 @@ export function SpotifyPlayerProvider({ children }: { children: ReactNode }) {
         playerRef.current.disconnect()
       }
     }
-  }, [])
+  }, [isInitialized])
 
   const play = async (uri?: string) => {
     if (!state.deviceId || !accessTokenRef.current) return

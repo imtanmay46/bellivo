@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useSpotifyPlayer } from "@/lib/spotify-player-context"
-import { Play, Clock, Heart } from "lucide-react"
+import { Play, Clock, Heart, MoreHorizontal } from "lucide-react"
 import Image from "next/image"
 
 interface PlaylistDetails {
@@ -33,6 +33,7 @@ interface PlaylistDetails {
 
 export default function PlaylistPage() {
   const params = useParams()
+  const router = useRouter()
   const [playlist, setPlaylist] = useState<PlaylistDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const player = useSpotifyPlayer()
@@ -41,7 +42,18 @@ export default function PlaylistPage() {
     const fetchPlaylist = async () => {
       try {
         const response = await fetch(`/api/spotify/playlists/${params.id}`)
+
+        if (response.status === 401) {
+          router.push("/auth/login")
+          return
+        }
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch playlist")
+        }
+
         const data = await response.json()
+        console.log("[v0] Loaded playlist:", data.name)
         setPlaylist(data)
       } catch (error) {
         console.error("[v0] Failed to fetch playlist:", error)
@@ -53,7 +65,7 @@ export default function PlaylistPage() {
     if (params.id) {
       fetchPlaylist()
     }
-  }, [params.id])
+  }, [params.id, router])
 
   const formatDuration = (ms: number) => {
     const minutes = Math.floor(ms / 60000)
@@ -78,7 +90,7 @@ export default function PlaylistPage() {
   }
 
   return (
-    <div>
+    <div className="pb-32">
       {/* Playlist Header */}
       <div className="bg-gradient-to-b from-[#C9A86A]/20 to-transparent p-8">
         <div className="flex items-end gap-6">
@@ -106,15 +118,21 @@ export default function PlaylistPage() {
       <div className="p-8 flex items-center gap-8">
         <button
           onClick={() => player.play(playlist.uri)}
-          className="w-14 h-14 bg-[#2ECC71] rounded-full flex items-center justify-center hover:scale-105 transition"
+          className="w-14 h-14 bg-[#2ECC71] rounded-full flex items-center justify-center hover:scale-105 transition shadow-lg"
         >
           <Play className="w-6 h-6 text-black fill-black ml-1" />
+        </button>
+        <button className="opacity-70 hover:opacity-100 transition">
+          <Heart className="w-8 h-8 text-white" />
+        </button>
+        <button className="opacity-70 hover:opacity-100 transition">
+          <MoreHorizontal className="w-8 h-8 text-white" />
         </button>
       </div>
 
       {/* Tracks */}
-      <div className="px-8 pb-8">
-        <div className="grid grid-cols-[16px_4fr_3fr_2fr_minmax(120px,1fr)] gap-4 px-4 py-2 border-b border-white/10 text-sm text-gray-400">
+      <div className="px-8">
+        <div className="grid grid-cols-[16px_4fr_3fr_2fr_minmax(120px,1fr)] gap-4 px-4 py-2 border-b border-white/10 text-sm text-gray-400 mb-2">
           <span>#</span>
           <span>Title</span>
           <span>Album</span>
@@ -122,14 +140,14 @@ export default function PlaylistPage() {
           <Clock className="w-4 h-4 ml-auto" />
         </div>
 
-        <div className="mt-4">
+        <div className="space-y-1">
           {playlist.tracks.items.map((item, index) => (
             <div
               key={item.track.id}
-              className="grid grid-cols-[16px_4fr_3fr_2fr_minmax(120px,1fr)] gap-4 px-4 py-2 rounded hover:bg-white/5 group cursor-pointer"
+              className="grid grid-cols-[16px_4fr_3fr_2fr_minmax(120px,1fr)] gap-4 px-4 py-2 rounded hover:bg-white/5 group cursor-pointer items-center"
               onClick={() => player.playTrack(item.track as any)}
             >
-              <span className="text-gray-400 group-hover:hidden">{index + 1}</span>
+              <span className="text-gray-400 group-hover:hidden text-center">{index + 1}</span>
               <Play className="w-4 h-4 text-white hidden group-hover:block" />
               <div className="flex items-center gap-3">
                 <Image

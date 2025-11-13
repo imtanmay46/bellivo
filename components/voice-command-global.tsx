@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { Mic, MicOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { usePlayer } from "@/lib/player-context"
+import { useSpotifyPlayer } from "@/lib/spotify-player-context"
 
 export function VoiceCommandGlobal() {
   const [isListening, setIsListening] = useState(false)
@@ -12,7 +12,7 @@ export function VoiceCommandGlobal() {
   const [feedback, setFeedback] = useState("")
   const recognitionRef = useRef<any>(null)
   const router = useRouter()
-  const { togglePlay, nextTrack, previousTrack, toggleFavorite, playTrack, setQueue } = usePlayer()
+  const player = useSpotifyPlayer()
 
   useEffect(() => {
     if (typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)) {
@@ -50,21 +50,25 @@ export function VoiceCommandGlobal() {
   const processCommand = async (text: string) => {
     console.log("[v0] Processing voice command:", text)
 
-    // Play song command
     if (text.includes("play")) {
-      const songName = text.replace("play", "").trim()
+      const songName = text.replace("play", "").replace("song", "").trim()
+
+      if (!songName) {
+        setFeedback("Please specify a song name")
+        setTimeout(() => setFeedback(""), 3000)
+        return
+      }
+
       setFeedback(`Searching for "${songName}"...`)
 
-      // Search Spotify and play first result
       try {
         const response = await fetch(`/api/spotify/search?q=${encodeURIComponent(songName)}`)
         const data = await response.json()
 
-        if (data.tracks && data.tracks.length > 0) {
-          const track = data.tracks[0]
-          playTrack(track)
-          setQueue(data.tracks)
-          setFeedback(`Now playing: ${track.title} by ${track.artist}`)
+        if (data.tracks?.items && data.tracks.items.length > 0) {
+          const track = data.tracks.items[0]
+          await player.playTrack(track)
+          setFeedback(`Now playing: ${track.name} by ${track.artists.map((a: any) => a.name).join(", ")}`)
         } else {
           setFeedback(`No results found for "${songName}"`)
         }
@@ -72,47 +76,73 @@ export function VoiceCommandGlobal() {
         console.error("[v0] Voice search error:", error)
         setFeedback("Search failed. Please try again.")
       }
-    }
-    // Search command
-    else if (text.includes("search")) {
+    } else if (text.includes("search")) {
       const query = text.replace("search", "").replace("for", "").trim()
       setFeedback(`Searching for "${query}"...`)
-      router.push(`/home?search=${encodeURIComponent(query)}`)
-    }
-    // Next/Skip command
-    else if (text.includes("next") || text.includes("skip")) {
+      router.push(`/search?q=${encodeURIComponent(query)}`)
+    } else if (text.includes("next") || text.includes("skip")) {
       setFeedback("Skipping to next track...")
-      nextTrack()
-    }
-    // Previous command
-    else if (text.includes("previous") || text.includes("back")) {
+      await player.skipToNext()
+    } else if (text.includes("previous") || text.includes("back")) {
       setFeedback("Going to previous track...")
-      previousTrack()
-    }
-    // Pause/Resume command
-    else if (text.includes("pause") || text.includes("stop") || text.includes("resume")) {
-      setFeedback(text.includes("pause") || text.includes("stop") ? "Pausing..." : "Resuming...")
-      togglePlay()
-    }
-    // Add to favorites
-    else if (text.includes("favorite") || text.includes("like")) {
-      setFeedback("Adding to favorites...")
-      toggleFavorite()
-    }
-    // Go to home
-    else if (text.includes("home") || text.includes("main")) {
+      await player.skipToPrevious()
+    } else if (text.includes("pause") || text.includes("stop")) {
+      setFeedback("Pausing...")
+      if (player.isPlaying) {
+        await player.pause()
+      }
+    } else if (text.includes("resume") || text.includes("continue")) {
+      setFeedback("Resuming...")
+      if (!player.isPlaying) {
+        await player.resume()
+      }
+    } else if (text.includes("volume")) {
+      if (text.includes("up") || text.includes("increase") || text.includes("louder")) {
+        const newVolume = Math.min(player.volume + 20, 100)
+        await player.setVolume(newVolume)
+        setFeedback(`Volume increased to ${newVolume}%`)
+      } else if (
+        text.includes("down") ||
+        text.includes("decrease") ||
+        text.includes("lower") ||
+        text.includes("quieter")
+      ) {
+        const newVolume = Math.max(player.volume - 20, 0)
+        await player.setVolume(newVolume)
+        setFeedback(`Volume decreased to ${newVolume}%`)
+      } else if (text.includes("mute")) {
+        await player.setVolume(0)
+        setFeedback("Muted")
+      } else if (text.includes("max") || text.includes("full")) {
+        await player.setVolume(100)
+        setFeedback("Volume set to maximum")
+      }
+    } else if (text.includes("shuffle")) {
+      await player.toggleShuffle()
+      setFeedback(player.shuffleMode ? "Shuffle off" : "Shuffle on")
+    } else if (text.includes("repeat")) {
+      await player.toggleRepeat()
+      setFeedback(`Repeat ${player.repeatMode}`)
+    } else if (text.includes("home") || text.includes("main")) {
       setFeedback("Going to home...")
       router.push("/home")
-    }
-    // Go to favorites
-    else if (text.includes("favorites") || text.includes("liked")) {
-      setFeedback("Opening favorites...")
-      router.push("/favorites")
-    }
-    // Go to explore
-    else if (text.includes("explore") || text.includes("discover")) {
-      setFeedback("Opening explore...")
-      router.push("/explore")
+    } else if (text.includes("liked") || text.includes("favorites")) {
+      setFeedback("Opening liked songs...")
+      router.push("/collection/tracks")
+    } else if (text.includes("playlist")) {
+      setFeedback("Opening playlists...")
+      router.push("/collection/playlists")
+    } else if (text.includes("library") || text.includes("collection")) {
+      setFeedback("Opening library...")
+      router.push("/collection")
+    } else if (text.includes("what") && (text.includes("playing") || text.includes("song"))) {
+      if (player.currentTrack) {
+        setFeedback(
+          `Playing: ${player.currentTrack.name} by ${player.currentTrack.artists.map((a) => a.name).join(", ")}`,
+        )
+      } else {
+        setFeedback("Nothing is playing right now")
+      }
     } else {
       setFeedback(`Command not recognized: "${text}"`)
     }

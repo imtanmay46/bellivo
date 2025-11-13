@@ -1,9 +1,8 @@
-import { NextResponse } from "next/server"
-import { getAccessToken } from "@/lib/spotify-client"
+import { type NextRequest, NextResponse } from "next/server"
 
-export async function GET() {
+export async function POST(request: NextRequest) {
   try {
-    const accessToken = await getAccessToken()
+    const { accessToken } = await request.json()
 
     if (!accessToken) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
@@ -14,4 +13,9 @@ export async function GET() {
     console.error("[v0] Failed to get access token:", error)
     return NextResponse.json({ error: "Failed to get token" }, { status: 500 })
   }
+}
+
+// Fallback GET method for legacy support
+export async function GET() {
+  return NextResponse.json({ error: "Use POST method with accessToken in body" }, { status: 400 })
 }
