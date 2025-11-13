@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 
 export default function LoginPage() {
-  const handleSpotifyLogin = () => {
-    const authUrl = getAuthorizationUrl()
+  const handleSpotifyLogin = async () => {
+    const authUrl = await getAuthorizationUrl()
     window.location.href = authUrl
   }
 
