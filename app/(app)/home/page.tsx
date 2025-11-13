@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useSpotifyPlayer } from "@/lib/spotify-player-context"
 import { Play } from "lucide-react"
 import Image from "next/image"
-import { isAuthenticated, getAccessToken } from "@/lib/spotify-auth"
+import { getAccessToken } from "@/lib/spotify-auth"
 import { useRouter } from "next/navigation"
 
 interface Playlist {
@@ -32,19 +32,14 @@ export default function HomePage() {
   const player = useSpotifyPlayer()
 
   useEffect(() => {
-    console.log("[v0] Home page: Checking authentication")
-    if (!isAuthenticated()) {
-      console.log("[v0] Not authenticated, redirecting to login")
-      router.push("/auth/login")
-      return
-    }
+    console.log("[v0] Home page: Loading Spotify content")
 
-    console.log("[v0] User authenticated, fetching data")
     const fetchData = async () => {
       try {
         const accessToken = getAccessToken()
 
         if (!accessToken) {
+          console.log("[v0] No access token found, redirecting to login")
           router.push("/auth/login")
           return
         }
@@ -58,9 +53,14 @@ export default function HomePage() {
           }),
         ])
 
+        if (playlistsRes.status === 401 || releasesRes.status === 401) {
+          console.error("[v0] Spotify API returned 401, token invalid")
+          router.push("/auth/login")
+          return
+        }
+
         if (!playlistsRes.ok || !releasesRes.ok) {
           console.error("[v0] Failed to fetch from Spotify API")
-          router.push("/auth/login")
           return
         }
 
